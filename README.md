@@ -21,7 +21,7 @@ Then in order to update the module you can simply do the following:
 ```bash
 # Update the submodule
 cd .devcontainer
-git checkout v2
+git checkout v1
 git pull
 ```
 
