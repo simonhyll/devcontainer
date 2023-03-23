@@ -1,0 +1,44 @@
+{
+    "name": "Dev Container",
+    "runArgs": [
+        // "--privileged" // Required if you need to run Electron apps
+        // "--network=host", // Without this the Tauri CLI will fail because it can't find a valid IP, and adb won't find your devices
+        "--device=/dev/kvm" // Enables virtualization inside the container
+    ],
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            // # Arguments for setting up the SDK. Can be overridden in devcontainer.json but shouldn't be required
+            // ANDROID_SDK_TOOLS_VERSION:"9477386"
+            // ANDROID_PLATFORM_VERSION:"32"
+            // ANDROID_BUILD_TOOLS_VERSION:"30.0.3"
+            // NDK_VERSION:"25.0.8775105"
+            // # Arguments for the Node.js version to install along with npm, yarn and pnpm
+            // NODE_VERSION:"18"
+            // # Argument for the mold linker version to install
+            // MOLD_VERSION:"v1.4.2"
+            // # Argument for the branch to use for the Tauri CLI
+            // TAURI_CLI_VERSION:"next"
+            // # Arguments related to setting up a non-root user for the container
+            // USERNAME:"vscode"
+            // USER_UID:"1000"
+            // USER_GID:"$USER_UID"
+            // # Arguments for installing dependencies where DEPENDENCIES are Tauri dependencies and EXTRA_DEPENDENCIES is empty so that users can add more without interfering with Tauri
+            // TAURI_DEPENDENCIES:"build-essential curl libappindicator3-dev libgtk-3-dev librsvg2-dev libssl-dev libwebkit2gtk-4.1-dev wget libappimage-dev"
+            // EXTRA_DEPENDENCIES:""
+            // # Argument for which image version to use
+            // IMAGE:"mcr.microsoft.com/vscode/devcontainers/base"
+            // VARIANT:"0-ubuntu-22.04"
+        }
+    },
+    "customizations": {
+        "settings": {},
+        "extensions": [
+            "rust-lang.rust-analyzer", // Recommended, rust-analyzer, to validate Rust code
+            "tauri-apps.tauri-vscode", // Recommended, tauri.conf.json schema
+            "ms-azuretools.vscode-docker" // Optional, primarily helps me develop the Dockerfile
+        ]
+    },
+    "remoteUser": "vscode", // The name of the non-root user in the container
+    "features": {}
+}
