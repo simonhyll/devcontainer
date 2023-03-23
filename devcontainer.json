@@ -3,7 +3,7 @@
     "runArgs": [
         // "--privileged" // Required if you need to run Electron apps
         // "--network=host", // Without this the Tauri CLI will fail because it can't find a valid IP, and adb won't find your devices
-        "--device=/dev/kvm" // Enables virtualization inside the container
+        // "--device=/dev/kvm" // Enables virtualization inside the container
     ],
     "build": {
         "dockerfile": "Dockerfile",

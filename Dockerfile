@@ -1,9 +1,3 @@
-# Arguments for setting up the SDK. Can be overridden in devcontainer.json but shouldn't be required
-ARG ANDROID_SDK_TOOLS_VERSION="9477386"
-ARG ANDROID_PLATFORM_VERSION="32"
-ARG ANDROID_BUILD_TOOLS_VERSION="30.0.3"
-ARG NDK_VERSION="25.0.8775105"
-
 # Arguments for the Node.js version to install along with npm, yarn and pnpm
 ARG NODE_VERSION="18"
 
@@ -19,7 +13,7 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Arguments for installing dependencies where DEPENDENCIES are Tauri dependencies and EXTRA_DEPENDENCIES is empty so that users can add more without interfering with Tauri
-ARG TAURI_DEPENDENCIES="build-essential curl libappindicator3-dev libgtk-3-dev librsvg2-dev libssl-dev libwebkit2gtk-4.1-dev wget libappimage-dev"
+ARG TAURI_DEPENDENCIES="libwebkit2gtk-4.0-dev build-essential curl wget libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev"
 ARG EXTRA_DEPENDENCIES=""
 
 # Argument for which image version to use
@@ -48,47 +42,6 @@ RUN apt update \
     pkg-config git git-lfs bash-completion llvm \
     # Install Tauri dependencies as well as extra dependencies
     && apt install -yq ${TAURI_DEPENDENCIES} ${EXTRA_DEPENDENCIES}
-
-######################################
-## Android SDK
-## Downloading and installing
-######################################
-FROM base_image as android_sdk
-WORKDIR /android_sdk
-
-# Redefine arguments
-ARG ANDROID_SDK_TOOLS_VERSION
-ARG ANDROID_PLATFORM_VERSION
-ARG ANDROID_BUILD_TOOLS_VERSION
-ARG NDK_VERSION
-
-# Environment variables inside the android_sdk step to ensure the SDK is built properly
-ENV ANDROID_HOME="/android_sdk"
-ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
-ENV NDK_HOME="${ANDROID_HOME}/ndk/${NDK_VERSION}"
-ENV PATH=${PATH}:/android_sdk/cmdline-tools/latest/bin
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-
-# Set up the SDK
-RUN curl -C - --output android-sdk-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip" \
-    && mkdir -p /android_sdk/cmdline-tools/latest/ \
-    && unzip -q android-sdk-tools.zip -d /android_sdk/cmdline-tools/latest/ \
-    && mv /android_sdk/cmdline-tools/latest/cmdline-tools/* /android_sdk/cmdline-tools/latest \
-    && rm -r /android_sdk/cmdline-tools/latest/cmdline-tools \
-    && rm android-sdk-tools.zip \
-    && yes | sdkmanager --licenses \
-    && touch $HOME/.android/repositories.cfg \
-    && sdkmanager "cmdline-tools;latest" \
-    && sdkmanager "platform-tools" \
-    && sdkmanager "emulator" \
-    && sdkmanager "platforms;android-${ANDROID_PLATFORM_VERSION}" \
-    && sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
-    && sdkmanager "ndk;${NDK_VERSION}" \
-    && sdkmanager "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
-
-# As an added bonus we set up a gradle.properties file that enhances Gradle performance
-RUN echo "org.gradle.daemon=true" >> "/gradle.properties" \
-    && echo "org.gradle.parallel=true" >> "/gradle.properties"
 
 ######################################
 ## Mold
@@ -148,21 +101,11 @@ RUN . ~/.cargo/env \
 FROM base_image
 
 # Redefine args
-ARG ANDROID_SDK_TOOLS_VERSION
-ARG ANDROID_PLATFORM_VERSION
-ARG ANDROID_BUILD_TOOLS_VERSION
-ARG NDK_VERSION
-
 ARG USERNAME
 ARG USER_UID
 ARG USER_GID
 
-# Set up the required Android environment variables
-ENV ANDROID_HOME="/home/${USERNAME}/android_sdk"
-ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
-ENV NDK_HOME="${ANDROID_HOME}/ndk/${NDK_VERSION}"
-ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ARG NODE_VERSION
 
 # Ensure the user is a sudo user in case the developer needs to e.g. run apt install later
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -195,8 +138,7 @@ ENV PATH="/home/${USERNAME}/.cargo/bin:$PATH"
 
 # Update Rust and install required Android targets
 RUN rustup update \
-    # Android targets
-    && rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android \
+    # Add WASM support
     && rustup target add wasm32-unknown-unknown
 
 # Install Trunk
@@ -208,10 +150,3 @@ COPY --from=mold --chown=${USERNAME}:${USERNAME} /config.toml /home/${USERNAME}/
 
 # Install the Tauri CLI
 COPY --from=tauri-cli --chown=${USERNAME}:${USERNAME} /cargo-tauri /usr/local/bin/cargo-tauri
-
-# Copy files from android_sdk
-COPY --from=android_sdk --chown=${USERNAME}:${USERNAME} /gradle.properties /home/${USERNAME}/.gradle/gradle.properties
-COPY --from=android_sdk --chown=${USERNAME}:${USERNAME} /android_sdk /home/${USERNAME}/android_sdk
-
-# Create an emulator
-RUN echo no | avdmanager create avd -n dev -k "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
