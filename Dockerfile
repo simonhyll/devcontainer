@@ -157,6 +157,8 @@ ARG USERNAME
 ARG USER_UID
 ARG USER_GID
 
+ARG NODE_VERSION
+
 # Set up the required Android environment variables
 ENV ANDROID_HOME="/home/${USERNAME}/android_sdk"
 ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -197,6 +199,7 @@ ENV PATH="/home/${USERNAME}/.cargo/bin:$PATH"
 RUN rustup update \
     # Android targets
     && rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android \
+    # Add WASM support
     && rustup target add wasm32-unknown-unknown
 
 # Install Trunk
