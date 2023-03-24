@@ -67,7 +67,10 @@ RUN git clone https://github.com/rui314/mold.git \
 # Set up a config.toml file that makes Cargo use clang and mold
 RUN echo "[target.x86_64-unknown-linux-gnu]" >> /config.toml \
     && echo "linker = \"clang\"" >> /config.toml \
-    && echo "rustflags = [\"-C\", \"link-arg=-fuse-ld=/usr/local/bin/mold\"]" >> /config.toml
+    && echo "rustflags = [\"-C\", \"link-arg=-fuse-ld=/usr/local/bin/mold\"]" >> /config.toml \
+    # Enable http instead of git for Cargo to speed it up
+    && echo "[registries.crates-io]" >> /config.toml \
+    && echo "protocol = \"sparse\"" >> /config.toml
 
 ######################################
 ## Tauri CLI
