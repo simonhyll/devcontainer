@@ -3,12 +3,19 @@
 # Dev Container
 </div>
 
-## Getting started
+## Commands
 
 ```bash
-# Run the emulator
+# Launch the Android emulator
 emulator -avd dev -no-audio -no-snapshot-load -gpu swiftshader_indirect -qemu -m 2048 -netdev user,id=mynet0,hostfwd=tcp::5555-:5555
 ```
+
+```bash
+# Run the Tauri CLI (with fixes)
+cargo tauri dev
+```
+
+## Getting started
 
 ### Alternative 1: Submodule
 
@@ -41,12 +48,25 @@ git clone https://github.com/simonhyll/devcontainer .devcontainer
 rm -rf .devcontainer/.git
 ```
 
-## Commands
+## Important notes
 
-```bash
-# Launch the Android emulator
-emulator -avd dev -no-audio -no-snapshot-load -gpu swiftshader_indirect -qemu -m 2048 -netdev user,id=mynet0,hostfwd=tcp::5555-:5555
-```
+### Tauri
+
+#### Use `cargo tauri` instead of e.g. `pnpm tauri`
+
+I still haven't found the cause of it but for me `pnpm tauri` doesn't work properly. So I've packaged a version of the CLI that does work for me, and it should work for you too.
+
+### Android
+
+#### Accessing devices on your host is a WIP
+
+- [X] Get ADB to connect to the host: Using port forwarding I've already figured out how to connect your running ADB instance on the host to the one running in the container. Thanks to this you're able to connect to any devices you can find on your host as per usual, both emulators and physical devices
+- [ ] Get the frontend running in the container to the device: Currently I have only figured out how to get the app to install. Exposing the frontend to the device however is another story and I haven't quite figured that one out yet
+- [ ] Forward a USB connected device straight to the container: Since running an ADB server on the host requires you to set up your host, it'd be even better if you can just access your physical device straight in the container, and to do that the best solution would be to get your USB device to be forwarded, but I haven't figured that one out yet
+
+#### The in-container emulator has poor performance
+
+The solution to this is to run the emulator on your host, or even connecting to a physical device. This however is a work in progress.
 
 ## Performance
 
