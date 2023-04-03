@@ -5,7 +5,7 @@ ARG NODE_VERSION="18"
 ARG MOLD_VERSION="v1.4.2"
 
 # Argument for the branch to use for the Tauri CLI
-ARG TAURI_CLI_VERSION="next"
+ARG TAURI_CLI_VERSION="1.2"
 
 # Arguments related to setting up a non-root user for the container
 ARG USERNAME=vscode
