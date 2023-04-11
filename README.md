@@ -39,7 +39,7 @@ Git submodules are pinned to a specific commit, which is why you're going to hav
 
 ### Alternative 2: Clone
 
-With this approach you clone the project and then remove the `.git` folder in order to effectively copy the folder from Github. This has the benefit if you not having to learn how submodules work and you won't have another dependency in your project, but it doesn't offer easy updates.
+With this approach you clone the project and then remove the `.git` folder in order to effectively copy the folder from Github. This has the benefit of you not having to learn how submodules work and you won't have another dependency in your project, but it doesn't offer easy updates.
 
 ```bash
 # Clone the container
