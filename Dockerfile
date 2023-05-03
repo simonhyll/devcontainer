@@ -8,10 +8,13 @@ ARG NDK_VERSION="25.0.8775105"
 ARG NODE_VERSION="18"
 
 # Argument for the mold linker version to install
-ARG MOLD_VERSION="v1.4.2"
+ARG MOLD_VERSION="v1.11.0"
+
+# Argument for the pnpm version to install
+ARG PNPM_VERSION="8.4.0"
 
 # Argument for the branch to use for the Tauri CLI
-ARG TAURI_CLI_VERSION="next"
+ARG TAURI_CLI_VERSION="2.0.0-alpha.8"
 
 # Arguments related to setting up a non-root user for the container
 ARG USERNAME=vscode
@@ -81,9 +84,9 @@ RUN curl -C - --output android-sdk-tools.zip "https://dl.google.com/android/repo
     && sdkmanager "cmdline-tools;latest" \
     && sdkmanager "platform-tools" \
     && sdkmanager "emulator" \
+    && sdkmanager "ndk;${NDK_VERSION}" \
     && sdkmanager "platforms;android-${ANDROID_PLATFORM_VERSION}" \
     && sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
-    && sdkmanager "ndk;${NDK_VERSION}" \
     && sdkmanager "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
 
 # As an added bonus we set up a gradle.properties file that enhances Gradle performance
@@ -101,48 +104,25 @@ WORKDIR /mold
 ARG MOLD_VERSION
 
 # Install dependencies
-RUN apt update \
-    && apt install -yq g++ libstdc++-10-dev zlib1g-dev cmake
+RUN apt update && apt install -yq zlib1g-dev cmake zlib1g-dev gcc g++
 
-# Clone mold 1.4.2, build it then install it
+# Clone mold, build it then install it
 RUN git clone https://github.com/rui314/mold.git \
-    && cd mold \
+    && mkdir mold/build \
+    && cd mold/build  \
     && git checkout --quiet ${MOLD_VERSION} \
-    && make -j$(nproc) CXX=clang++ \
-    && make install
+    && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=c++ .. \
+    && cmake --build . -j $(nproc) \
+    && cmake --install .
 
 # Set up a config.toml file that makes Cargo use clang and mold
-RUN echo "[target.x86_64-unknown-linux-gnu]" >> /config.toml \
+RUN echo "[profile.debug.target.x86_64-unknown-linux-gnu]" >> /config.toml \
     && echo "linker = \"clang\"" >> /config.toml \
     && echo "rustflags = [\"-C\", \"link-arg=-fuse-ld=/usr/local/bin/mold\"]" >> /config.toml \
-    # Enable http instead of git for Cargo to speed it up
     && echo "[registries.crates-io]" >> /config.toml \
-    && echo "protocol = \"sparse\"" >> /config.toml
-
-######################################
-## Tauri CLI
-## Temporary workaround
-######################################
-FROM base_image as tauri-cli
-WORKDIR /build
-
-# Redefinte arguments
-ARG TAURI_CLI_VERSION
-
-# Install rustup
-RUN curl https://sh.rustup.rs -sSf | \
-    sh -s -- --default-toolchain stable -y
-
-# Add Cargo bin to the PATH
-ENV PATH="/home/${USERNAME}/.cargo/bin:$PATH"
-
-# Build and install the Tauri CLI
-RUN . ~/.cargo/env \
-    && git clone https://github.com/tauri-apps/tauri \
-    && cd tauri/tooling/cli \
-    && git checkout ${TAURI_CLI_VERSION} \
-    && cargo build \
-    && cp target/debug/cargo-tauri /cargo-tauri
+    && echo "protocol = \"sparse\"" >> /config.toml \
+    && echo "[net]" >> /config.toml \
+    && echo "git-fetch-with-cli = true" >> /config.toml
 
 ######################################
 ## The finalized container
@@ -162,6 +142,8 @@ ARG USER_GID
 
 ARG NODE_VERSION
 
+ARG TAURI_CLI_VERSION
+
 # Set up the required Android environment variables
 ENV ANDROID_HOME="/home/${USERNAME}/android_sdk"
 ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -178,8 +160,11 @@ RUN curl -sL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -E - \
     && apt update \
     && apt install -yq nodejs \
     && npm i -g npm \
-    && npm i -g yarn pnpm \
-    && SHELL=bash pnpm setup
+    && npm i -g yarn \
+    && npm i -g pnpm@${PNPM_VERSION}
+
+# Set up pnpm
+RUN SHELL=bash pnpm setup
 
 # Clean up to reduce container size
 RUN apt clean \
@@ -203,17 +188,15 @@ RUN rustup update \
     # Android targets
     && rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android \
     # Add WASM support
-    && rustup target add wasm32-unknown-unknown
-
-# Install Trunk
-RUN cargo install trunk --git https://github.com/amrbashir/trunk
+    && rustup target add wasm32-unknown-unknown \
+    # Install Trunk
+    && cargo install trunk --git https://github.com/amrbashir/trunk \
+    # Install Tauri CLI
+    && cargo install tauri-cli@${TAURI_CLI_VERSION}
 
 # Copy files from mold
 COPY --from=mold --chown=${USERNAME}:${USERNAME} /usr/local/bin/mold /usr/local/bin/mold
 COPY --from=mold --chown=${USERNAME}:${USERNAME} /config.toml /home/${USERNAME}/.cargo/config.toml
-
-# Install the Tauri CLI
-COPY --from=tauri-cli --chown=${USERNAME}:${USERNAME} /cargo-tauri /usr/local/bin/cargo-tauri
 
 # Copy files from android_sdk
 COPY --from=android_sdk --chown=${USERNAME}:${USERNAME} /gradle.properties /home/${USERNAME}/.gradle/gradle.properties
@@ -221,3 +204,7 @@ COPY --from=android_sdk --chown=${USERNAME}:${USERNAME} /android_sdk /home/${USE
 
 # Create an emulator
 RUN echo no | avdmanager create avd -n dev -k "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
+
+# Add ~/.bin to the PATH
+RUN mkdir -p /home/${USERNAME}/.bin \
+    && echo "export PATH=/home/${USERNAME}/.bin:$PATH" >>/home/${USERNAME}/.bashrc
