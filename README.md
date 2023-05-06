@@ -17,6 +17,10 @@ cargo tauri dev
 
 ## Getting started
 
+Before you can get started using dev containers you first need to set up your environment. Make sure you first read the official guide on the topic.
+
+**Read this**: <https://code.visualstudio.com/docs/devcontainers/containers>
+
 ### Alternative 1: Submodule
 
 This approach offers easy updates from upstream since you can just pull the latest version from Github.
