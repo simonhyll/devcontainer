@@ -18,9 +18,9 @@
             // # Argument for the mold linker version to install
             // "MOLD_VERSION":"v1.4.2",
             // # Argument for the PNPM version to install
-            "PNPM_VERSION":"8.4.0",
+            "PNPM_VERSION":"8.5.1",
             // # Argument for the branch to use for the Tauri CLI
-            "TAURI_CLI_VERSION":"2.0.0-alpha.8"
+            "TAURI_CLI_VERSION":"2.0.0-alpha.9"
             // # Arguments related to setting up a non-root user for the container
             // "USERNAME":"vscode",
             // "USER_UID":"1000",
