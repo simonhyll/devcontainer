@@ -32,17 +32,17 @@
             // "IMAGE":"mcr.microsoft.com/vscode/devcontainers/base",
             // "VARIANT":"0-ubuntu-22.04"
         }
+  },
+  "customizations": {
+    "settings": {
+      "extensions.installRecommended": true
     },
-    "customizations": {
-        "settings": {
-            "extensions.installRecommended": true
-        },
-        "extensions": [
-            "rust-lang.rust-analyzer", // Recommended, rust-analyzer, to validate Rust code
-            "tauri-apps.tauri-vscode", // Recommended, tauri.conf.json schema
-            "ms-azuretools.vscode-docker" // Optional, primarily helps me develop the Dockerfile
-        ]
-    },
-    "remoteUser": "vscode", // The name of the non-root user in the container
-    "features": {}
+    "extensions": [
+      "rust-lang.rust-analyzer", // Recommended, rust-analyzer, to validate Rust code
+      "tauri-apps.tauri-vscode", // Recommended, tauri.conf.json schema
+      "ms-azuretools.vscode-docker" // Optional, primarily helps me develop the Dockerfile
+    ]
+  },
+  "remoteUser": "vscode", // The name of the non-root user in the container
+  "features": {}
 }

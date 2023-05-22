@@ -11,10 +11,13 @@ ARG NODE_VERSION="18"
 ARG MOLD_VERSION="v1.11.0"
 
 # Argument for the pnpm version to install
-ARG PNPM_VERSION="8.4.0"
+ARG PNPM_VERSION="8.5.1"
 
 # Argument for the branch to use for the Tauri CLI
-ARG TAURI_CLI_VERSION="2.0.0-alpha.8"
+ARG TAURI_CLI_VERSION="2.0.0-alpha.9"
+
+# Argument for the Java version to use
+ARG JAVA_VERSION="17"
 
 # Arguments related to setting up a non-root user for the container
 ARG USERNAME=vscode
@@ -46,7 +49,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update \
     && apt upgrade -yq \
     # Install general dependencies
-    && apt install -yq --no-install-recommends sudo default-jdk \
+    && apt install -yq --no-install-recommends sudo openjdk-17-jdk openjdk-17-jre \
     wget curl xz-utils zip unzip file socat clang libssl-dev \
     pkg-config git git-lfs bash-completion llvm \
     # Install Tauri dependencies as well as extra dependencies
@@ -64,13 +67,14 @@ ARG ANDROID_SDK_TOOLS_VERSION
 ARG ANDROID_PLATFORM_VERSION
 ARG ANDROID_BUILD_TOOLS_VERSION
 ARG NDK_VERSION
+ARG JAVA_VERSION
 
 # Environment variables inside the android_sdk step to ensure the SDK is built properly
 ENV ANDROID_HOME="/android_sdk"
 ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
 ENV NDK_HOME="${ANDROID_HOME}/ndk/${NDK_VERSION}"
 ENV PATH=${PATH}:/android_sdk/cmdline-tools/latest/bin
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64
 
 # Set up the SDK
 RUN curl -C - --output android-sdk-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip" \
@@ -135,21 +139,19 @@ ARG ANDROID_SDK_TOOLS_VERSION
 ARG ANDROID_PLATFORM_VERSION
 ARG ANDROID_BUILD_TOOLS_VERSION
 ARG NDK_VERSION
-
 ARG USERNAME
 ARG USER_UID
 ARG USER_GID
-
 ARG NODE_VERSION
-
 ARG TAURI_CLI_VERSION
+ARG JAVA_VERSION
 
 # Set up the required Android environment variables
 ENV ANDROID_HOME="/home/${USERNAME}/android_sdk"
 ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
 ENV NDK_HOME="${ANDROID_HOME}/ndk/${NDK_VERSION}"
 ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64
 
 # Ensure the user is a sudo user in case the developer needs to e.g. run apt install later
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
